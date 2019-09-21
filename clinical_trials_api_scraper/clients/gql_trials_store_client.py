@@ -1,5 +1,8 @@
 import requests
 
+from clinical_trials_api_scraper.clients.trials_store_interface_base import \
+    TrialsStoreInterfaceBase
+
 # TODO: productionize this hack
 CONFIG = {
     'graphql': {
@@ -8,13 +11,16 @@ CONFIG = {
     }
 }
 
-class StatusStoreGqlClient(object):
+class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
     def __init__(self):
         self.api_endpoint = "http://{}:{}/graphql".format(
             CONFIG['graphql']['host'],
             CONFIG['graphql']['port']
         )
         self.headers = {}
+
+    def store_trials_batch(self, trials_batch):
+        raise NotImplementedError
 
     def make_request(self, query_str):
         response = requests.post(
