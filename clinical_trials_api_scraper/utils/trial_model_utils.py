@@ -33,6 +33,7 @@ def trial_from_response_data(response_data):
     trial_model = {
         new_key: response_data.get(old_key) for new_key, old_key in RESPONSE_TO_TRIAL_MAP.items()
     }
+    trial_model['isDelayed'] = trial_model.get('isDelayed') == 'Yes'
 
     for time_field in DATE_FIELDS:
         if trial_model.get(time_field):

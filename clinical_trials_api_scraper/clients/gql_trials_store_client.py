@@ -71,7 +71,6 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
 
     def _create_trial(self, trial):
         response = self.make_request(self._create_trial_query_str(trial))
-        print(trial, '\n', response)
         return response['data']['createTrial']['trial']['id']
 
     def _update_trial(self, trial):
