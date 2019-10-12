@@ -7,10 +7,13 @@ logger = logging.getLogger(__name__)
 class ClinicalTrialsRestClient(object):
     base_url = 'https://clinicaltrials.gov/api'
     DEFAULT_REQUESTED_FIELDS = [
+        'NCTId',
         'OrgFullName',
+        'OrgClass',
         'OverallStatus',
         'StatusVerifiedDate',
         'DelayedPosting',
+        'WhyStopped',
         'CompletionDate',
         'CompletionDateType',
         'ResultsFirstSubmitDate',
@@ -68,7 +71,11 @@ class ClinicalTrialsRestClient(object):
         json_response = response.json()['StudyFieldsResponse']
         if json_response['NStudiesReturned'] == 0:
             return []
-        return json_response['StudyFields']
+        data_version = json_response['DataVrs']
+        response_data = json_response['StudyFields']
+        for datum in response_data:
+            datum['DataVersion'] = data_version
+        return response_data
 
     @classmethod
     def _clean_data(cls, response_data):
