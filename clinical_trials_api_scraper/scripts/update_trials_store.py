@@ -1,3 +1,5 @@
+#!/usr/local/bin/python
+
 from clinical_trials_api_scraper.clients.in_memory_trials_store_client import \
     InMemoryTrialsStoreClient
 from clinical_trials_api_scraper.clients.gql_trials_store_client import GqlTrialsStoreClient
