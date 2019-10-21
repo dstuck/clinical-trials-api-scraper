@@ -1,5 +1,4 @@
 from dateutil import parser
-import datetime as dt
 
 RESPONSE_TO_TRIAL_MAP = {
     'id': 'NCTId',
