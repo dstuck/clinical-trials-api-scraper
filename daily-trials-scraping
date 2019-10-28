@@ -1,0 +1,1 @@
+0 4 * * * update_trials_store.py --max-id 100

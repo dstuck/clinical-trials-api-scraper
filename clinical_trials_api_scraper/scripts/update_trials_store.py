@@ -1,9 +1,16 @@
 #!/usr/local/bin/python
+import logging
+import sys
 
 from clinical_trials_api_scraper.clients.in_memory_trials_store_client import \
     InMemoryTrialsStoreClient
 from clinical_trials_api_scraper.clients.gql_trials_store_client import GqlTrialsStoreClient
 from clinical_trials_api_scraper.scrapers.clinical_trials_scraper import ClinicalTrialsScraper
+
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def main(min_id=None, max_id=None, in_memory=False):
     if in_memory:
@@ -12,7 +19,8 @@ def main(min_id=None, max_id=None, in_memory=False):
         store = GqlTrialsStoreClient()
     scraper = ClinicalTrialsScraper(data_store_client=store, min_id=min_id, max_id=max_id)
     scraper.scrape_all_trials()
-    print("Scraped {} trials".format(len(store.store)))
+    logger.info("log: Scraped {} trials".format(len(store.store)))
+
 
 if __name__ == "__main__":
     import argparse
