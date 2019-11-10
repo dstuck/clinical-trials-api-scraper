@@ -19,7 +19,7 @@ def main(min_id=None, max_id=None, in_memory=False):
         store = GqlTrialsStoreClient()
     scraper = ClinicalTrialsScraper(data_store_client=store, min_id=min_id, max_id=max_id)
     scraper.scrape_all_trials()
-    logger.info("log: Scraped {} trials".format(len(store.store)))
+    logger.info("Completed scraping trials")
 
 
 if __name__ == "__main__":
