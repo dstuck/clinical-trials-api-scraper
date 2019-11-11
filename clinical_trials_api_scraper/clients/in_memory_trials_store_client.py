@@ -13,3 +13,6 @@ class InMemoryTrialsStoreClient(TrialsStoreInterfaceBase):
     def store_trials_batch(self, trials_batch):
         logger.debug('storing {} values'.format(len(trials_batch)))
         self.store.extend(trials_batch)
+
+    def is_ready(self):
+        return True

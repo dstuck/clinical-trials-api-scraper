@@ -17,6 +17,8 @@ def main(min_id=None, max_id=None, in_memory=False):
         store = InMemoryTrialsStoreClient()
     else:
         store = GqlTrialsStoreClient()
+    if not store.is_ready():
+        raise ValueError("Store not ready for data")
     scraper = ClinicalTrialsScraper(data_store_client=store, min_id=min_id, max_id=max_id)
     scraper.scrape_all_trials()
     logger.info("Completed scraping trials")

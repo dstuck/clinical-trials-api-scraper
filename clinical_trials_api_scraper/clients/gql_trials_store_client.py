@@ -41,6 +41,13 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
             raise ex
         return response.json()
 
+    def is_ready(self):
+        try:
+            response = self.make_request(self._get_schema_query_str())
+        except Exception as ex:
+            return False
+        return True
+
     def store_trials_batch(self, trials_batch):
         trials = [trial_from_response_data(t) for t in trials_batch]
         self.create_or_update_trials_institutions(trials)
@@ -107,6 +114,16 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
     def get_all_institutions(self):
         response_json = self.make_request(self._get_all_institutions_query_str())
         return response_json['data']['allInstitutions']
+
+    @staticmethod
+    def _get_schema_query_str():
+        return '''{
+          __schema {
+            types {
+              name
+            }
+          }
+        }'''
 
     @staticmethod
     def _get_trial_query_str(trial_id):
