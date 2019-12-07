@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 def main(min_id=None, max_id=None, in_memory=False, host="localhost", port=5000):
-    logger.info("I am different3")
     if in_memory:
         store = InMemoryTrialsStoreClient()
     else:
