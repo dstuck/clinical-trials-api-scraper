@@ -30,6 +30,14 @@ def extract_institution_from_trial(trial):
     return institution
 
 
+def split_institution_trial(full_trial):
+    trial = full_trial.copy()
+    institution = {}
+    for field in INSTITUTION_FIELDS:
+        institution[field] = trial.pop(field)
+    return institution, trial
+
+
 def trial_from_response_data(response_data):
     trial_model = {
         new_key: response_data.get(old_key) for new_key, old_key in RESPONSE_TO_TRIAL_MAP.items()
