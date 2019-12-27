@@ -34,7 +34,9 @@ def split_institution_trial(full_trial):
     trial = full_trial.copy()
     institution = {}
     for field in INSTITUTION_FIELDS:
-        institution[field] = trial.pop(field)
+        value = trial.pop(field)
+        value = '' if value is None else value
+        institution[field] = value
     return institution, trial
 
 
