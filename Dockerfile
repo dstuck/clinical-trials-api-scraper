@@ -8,4 +8,4 @@ COPY setup.py /app/clinical-trials-api-scraper
 RUN pip install /app/clinical-trials-api-scraper
 
 # Run scraper once to bootstrap db then set up cron
-CMD update_trials_store.py --max-id 100 --use-sql --host ${GRAPHQL_HOST} --port ${GRAPHQL_PORT} && sleep ${SECONDS_BETWEEN_SCRAPES}
+CMD update_trials_store.py --max-id ${SCRAPER_MAX_ID} ${SCRAPER_USE_SQL_FLAG} --host ${GRAPHQL_HOST} --port ${GRAPHQL_PORT} && sleep ${SECONDS_BETWEEN_SCRAPES}
