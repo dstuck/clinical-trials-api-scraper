@@ -11,6 +11,8 @@ setup(
     # long_description=open('README.md').read(),
     install_requires=[
         "requests",
-        "python-dateutil"
+        "python-dateutil",
+        "sqlalchemy",
+        "psycopg2-binary"
     ],
 )

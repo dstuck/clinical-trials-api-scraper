@@ -12,19 +12,12 @@ from clinical_trials_api_scraper.utils.gql_utils import format_dict_as_gql_map
 
 logger = logging.getLogger(__name__)
 
-# TODO: productionize this hack
-CONFIG = {
-    'graphql': {
-        'host': 'localhost',
-        'port': '5000'
-    }
-}
 
 class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
-    def __init__(self):
+    def __init__(self, host, port):
         self.api_endpoint = "http://{}:{}/graphql".format(
-            CONFIG['graphql']['host'],
-            CONFIG['graphql']['port']
+            host,
+            port
         )
         self.headers = {}
 
@@ -45,6 +38,7 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
         try:
             response = self.make_request(self._get_schema_query_str())
         except Exception as ex:
+            logger.info("Connection exception: {}".format(ex.args))
             return False
         return True
 
@@ -96,14 +90,15 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
         :param institution: dict with institution fields
         :return: Id of institution if exists or None
         """
-        response_json = self.make_request(self._get_institution_query_str(institution))
+        response_json = self.make_request(
+            self._get_institution_query_str(institution))
         edges = response_json['data']['allInstitutions']['edges']
         if not edges:
             return None
         elif len(edges) > 1:
-            raise IndexError("Found more than one institution: {}".format(edges))
+            raise IndexError(
+                "Found more than one institution: {}".format(edges))
         return edges[0].get('node', {}).get('id')
-
 
     def _create_institution(self, institution):
         response_json = self.make_request(self._create_institution_query_str(
@@ -112,7 +107,8 @@ class GqlTrialsStoreClient(TrialsStoreInterfaceBase):
         return response_json['data']['createInstitution']['institution']['id']
 
     def get_all_institutions(self):
-        response_json = self.make_request(self._get_all_institutions_query_str())
+        response_json = self.make_request(
+            self._get_all_institutions_query_str())
         return response_json['data']['allInstitutions']
 
     @staticmethod
