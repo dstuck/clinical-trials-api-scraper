@@ -11,16 +11,21 @@ class ClinicalTrialsRestClient(object):
         'OrgFullName',
         'OrgClass',
         'OverallStatus',
-        'StatusVerifiedDate',
+        'OfficialTitle',
+        'Condition',
         'DelayedPosting',
         'WhyStopped',
+        'StartDate',
+        'StatusVerifiedDate',
         'CompletionDate',
-        'CompletionDateType',
         'ResultsFirstSubmitDate',
-        'ResultsFirstSubmitQCDate',
         'ResultsFirstPostDate',
-        'ResultsFirstPostDateType',
+        'LastUpdateSubmitDate',
         'PointOfContactEMail',
+        'PointOfContactOrganization',
+        'ResponsiblePartyInvestigatorFullName',
+        'OverallOfficialAffiliation',
+        'OverallOfficialName',
     ]
     MAX_REQUESTABLE_RECORDS = 1000
 
@@ -34,7 +39,8 @@ class ClinicalTrialsRestClient(object):
     @classmethod
     def request_trials(cls, start_id, end_id=None, requested_fields=None, dry_run=False):
         if start_id < 1:
-            raise IndexError('start_id must be 1 or greater: {}'.format(start_id))
+            raise IndexError(
+                'start_id must be 1 or greater: {}'.format(start_id))
 
         if (end_id+1 - start_id) > cls.MAX_REQUESTABLE_RECORDS:
             raise IndexError(
@@ -88,9 +94,10 @@ class ClinicalTrialsRestClient(object):
             for default_field in cls.DEFAULT_REQUESTED_FIELDS:
                 if default_field in trial:
                     field_value = trial[default_field]
-                    if len(field_value) > 1:
-                        logger.warning(
-                            "Received more than one value for {}: {}".format(default_field, trial)
-                        )
-                    trial[default_field] = field_value[0] if field_value else None
+                    if isinstance(field_value, (list, tuple)):
+                        # TODO: just take the first one for now, this is a hack!
+                        trial[default_field] = field_value[0] if len(
+                            field_value) > 0 else None
+            # delete useless field
+            del trial['Rank']
         return response_data

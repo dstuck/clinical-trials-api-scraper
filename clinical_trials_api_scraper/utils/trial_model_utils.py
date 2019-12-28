@@ -1,26 +1,12 @@
 from dateutil import parser
 
-RESPONSE_TO_TRIAL_MAP = {
-    'id': 'NCTId',
-    # 'trialId': 'NCTId',
-    'orgName': 'OrgFullName',
-    'orgType': 'OrgClass',
-    'completionStatus': 'OverallStatus',
-    'isDelayed': 'DelayedPosting',
-    'completionDate': 'CompletionDate',
-    'resultsReportDate': 'ResultsFirstSubmitDate',
-    'contactEmail': 'PointOfContactEMail',
-    'clinicaltrialsUpdatedAt': 'DataVersion',
-    # '': 'StatusVerifiedDate',
-    # '': 'ResultsFirstSubmitQCDate',
-    # '': 'ResultsFirstPostDate',
-    # '': 'ResultsFirstPostDateType',
-    # '': 'CompletionDateType',
-    # '': 'WhyStopped',
+# fields not in this map just get passed through
+RENAME_FIELDS_MAP = {
+    'NCTId': 'id',
 }
 DATE_FIELDS = ['completionDate', 'clinicaltrialsUpdatedAt']
 
-INSTITUTION_FIELDS = ['orgName', 'orgType']
+INSTITUTION_FIELDS = ['org_full_name', 'org_class']
 
 
 def extract_institution_from_trial(trial):
@@ -41,16 +27,36 @@ def split_institution_trial(full_trial):
 
 
 def trial_from_response_data(response_data):
-    trial_model = {
-        new_key: response_data.get(old_key) for new_key, old_key in RESPONSE_TO_TRIAL_MAP.items()
-    }
-    trial_model['isDelayed'] = trial_model.get('isDelayed') == 'Yes'
+    trial_model = {RENAME_FIELDS_MAP.get(
+        k, k): v for k, v in response_data.items()}
 
-    for time_field in DATE_FIELDS:
-        if trial_model.get(time_field):
-            trial_model[time_field] = parser.parse(
-                trial_model[time_field]).isoformat()
-    return trial_model
+    for k, v in trial_model.items():
+        if not isinstance(v, str):
+            continue
+
+        # convert anything that parses as a date into a date in ISO format
+        try:
+            trial_model[k] = parser.parse(v).isoformat()
+            continue
+        except ValueError:
+            pass
+
+        # convert anything that looks boolean into a bool
+        if v == 'Yes':
+            trial_model[k] = True
+            continue
+        elif v == 'No':
+            trial_model[k] = False
+            continue
+
+        # convert integers (I'm not aware of any floats in the schema)
+        try:
+            trial_model[k] = int(v)
+            continue
+        except ValueError:
+            pass
+
+    return dict_to_snake_case(trial_model)
 
 
 def dict_to_snake_case(d):
@@ -58,6 +64,5 @@ def dict_to_snake_case(d):
 
 
 def to_snake_case(str):
-
     return ''.join(['_'+i.lower() if i.isupper()
                     else i for i in str]).lstrip('_')

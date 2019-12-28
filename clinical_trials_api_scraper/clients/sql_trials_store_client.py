@@ -42,21 +42,15 @@ class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
     def store_trials_batch(self, trials_batch):
         logger.info('storing {} values'.format(len(trials_batch)))
         trials = [tmu.trial_from_response_data(t) for t in trials_batch]
-        #institution_dict = {}
         for full_trial in trials:
             institution, trial = tmu.split_institution_trial(full_trial)
-            inst_obj = Institution(
-                **tmu.dict_to_snake_case(institution))
-            #institution_key = (inst_obj.org_name, inst_obj.org_type)
-
-            # deduplicate institutions
-            #inst_obj = institution_dict.setdefault(institution_key, inst_obj)
+            inst_obj = Institution(**institution)
 
             trial['institution'] = inst_obj
-            trial_obj = Trial(**tmu.dict_to_snake_case(trial))
+            trial_obj = Trial(**trial)
             self.session.merge(trial_obj)
             logger.info(
-                f'storing trial {trial_obj.id} from {inst_obj.org_name}')
+                f'storing trial {trial_obj.id} from {inst_obj.org_full_name}')
         self.session.commit()
 
     def is_ready(self):
