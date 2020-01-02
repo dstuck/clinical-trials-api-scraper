@@ -15,8 +15,6 @@ DB_SCHEMA = "trials_status_schema"
 
 logger = logging.getLogger(__name__)
 
-# Base = declarative_base(cls=DeferredReflection,
-#                         metadata=MetaData(schema=DB_SCHEMA))
 Base = automap_base(metadata=MetaData(schema=DB_SCHEMA))
 
 
@@ -44,6 +42,7 @@ class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
     def store_trials_batch(self, trials_batch):
         logger.info("storing {} values".format(len(trials_batch)))
         trials = [tmu.trial_from_response_data(t) for t in trials_batch]
+        trials = [tmu.add_computed_fields(t) for t in trials]
         for full_trial in trials:
             institution, trial = tmu.split_institution_trial(full_trial)
             inst_obj = Institution(**institution)

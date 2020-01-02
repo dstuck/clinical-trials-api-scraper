@@ -1,4 +1,5 @@
 from dateutil import parser
+import datetime as dt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -7,7 +8,6 @@ logger = logging.getLogger(__name__)
 RENAME_FIELDS_MAP = {
     "NCTId": "id",
 }
-DATE_FIELDS = ["completionDate", "clinicaltrialsUpdatedAt"]
 
 INSTITUTION_FIELDS = ["org_full_name", "org_class"]
 
@@ -38,7 +38,7 @@ def trial_from_response_data(response_data):
 
         # convert anything that parses as a date into a date in ISO format
         try:
-            trial_model[k] = parser.parse(v).isoformat()
+            trial_model[k] = parser.parse(v)
             continue
         except (ValueError, OverflowError, TypeError):
             pass
@@ -61,6 +61,31 @@ def trial_from_response_data(response_data):
             pass
 
     return dict_to_snake_case(trial_model)
+
+
+def add_computed_fields(trial):
+    """Adds Computed fields to a trial
+
+    Fields related to https://clinicaltrials.gov/ct2/manage-recs/fdaaa
+    should_have_results: the trial should have reported results by now
+    is_late: the trial is or was late reporting results
+    is_missing: the trial results should have been reported by now but are missing
+    """
+    one_year = dt.timedelta(365)
+    one_year_ago = dt.datetime.now() - one_year
+    logger.info(trial)
+    completion_date = trial["completion_date"]
+    trial["should_have_results"] = (
+        completion_date is not None and completion_date <= one_year_ago
+    )
+
+    results_date = trial["results_first_post_date"]
+    trial["is_late"] = trial["should_have_results"] and (
+        (not results_date) or results_date > (completion_date + one_year)
+    )
+    trial["is_missing"] = trial["should_have_results"] and not results_date
+
+    return trial
 
 
 def dict_to_snake_case(d):
