@@ -1,12 +1,15 @@
 from dateutil import parser
+import logging
+
+logger = logging.getLogger(__name__)
 
 # fields not in this map just get passed through
 RENAME_FIELDS_MAP = {
-    'NCTId': 'id',
+    "NCTId": "id",
 }
-DATE_FIELDS = ['completionDate', 'clinicaltrialsUpdatedAt']
+DATE_FIELDS = ["completionDate", "clinicaltrialsUpdatedAt"]
 
-INSTITUTION_FIELDS = ['org_full_name', 'org_class']
+INSTITUTION_FIELDS = ["org_full_name", "org_class"]
 
 
 def extract_institution_from_trial(trial):
@@ -21,14 +24,13 @@ def split_institution_trial(full_trial):
     institution = {}
     for field in INSTITUTION_FIELDS:
         value = trial.pop(field)
-        value = '' if value is None else value
+        value = "" if value is None else value
         institution[field] = value
     return institution, trial
 
 
 def trial_from_response_data(response_data):
-    trial_model = {RENAME_FIELDS_MAP.get(
-        k, k): v for k, v in response_data.items()}
+    trial_model = {RENAME_FIELDS_MAP.get(k, k): v for k, v in response_data.items()}
 
     for k, v in trial_model.items():
         if not isinstance(v, str):
@@ -38,14 +40,16 @@ def trial_from_response_data(response_data):
         try:
             trial_model[k] = parser.parse(v).isoformat()
             continue
-        except ValueError:
+        except (ValueError, OverflowError, TypeError):
             pass
+        except:
+            logger.info(f'Ignoring unusual date: {k}="{v}"')
 
         # convert anything that looks boolean into a bool
-        if v == 'Yes':
+        if v == "Yes":
             trial_model[k] = True
             continue
-        elif v == 'No':
+        elif v == "No":
             trial_model[k] = False
             continue
 
@@ -64,5 +68,4 @@ def dict_to_snake_case(d):
 
 
 def to_snake_case(str):
-    return ''.join(['_'+i.lower() if i.isupper()
-                    else i for i in str]).lstrip('_')
+    return "".join(["_" + i.lower() if i.isupper() else i for i in str]).lstrip("_")

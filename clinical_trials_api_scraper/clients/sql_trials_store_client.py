@@ -5,8 +5,9 @@ from sqlalchemy.ext.declarative import declarative_base, DeferredReflection
 from sqlalchemy.ext.automap import automap_base
 
 
-from clinical_trials_api_scraper.clients.trials_store_interface_base import \
-    TrialsStoreInterfaceBase
+from clinical_trials_api_scraper.clients.trials_store_interface_base import (
+    TrialsStoreInterfaceBase,
+)
 import clinical_trials_api_scraper.utils.trial_model_utils as tmu
 
 
@@ -20,11 +21,11 @@ Base = automap_base(metadata=MetaData(schema=DB_SCHEMA))
 
 
 class Institution(Base):
-    __tablename__ = 'institutions'
+    __tablename__ = "institutions"
 
 
 class Trial(Base):
-    __tablename__ = 'trials'
+    __tablename__ = "trials"
 
 
 class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
@@ -32,7 +33,8 @@ class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
 
     def __init__(self):
         self.engine = create_engine(
-            'postgres://postgres:1234@db:5432/{}'.format(self.db_name), echo=False)
+            "postgres://postgres:1234@db:5432/{}".format(self.db_name), echo=False
+        )
         Base.prepare(self.engine, reflect=True)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
@@ -40,17 +42,16 @@ class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
         logger.info(Institution.__table__.columns)
 
     def store_trials_batch(self, trials_batch):
-        logger.info('storing {} values'.format(len(trials_batch)))
+        logger.info("storing {} values".format(len(trials_batch)))
         trials = [tmu.trial_from_response_data(t) for t in trials_batch]
         for full_trial in trials:
             institution, trial = tmu.split_institution_trial(full_trial)
             inst_obj = Institution(**institution)
 
-            trial['institution'] = inst_obj
+            trial["institution"] = inst_obj
             trial_obj = Trial(**trial)
             self.session.merge(trial_obj)
-            logger.info(
-                f'storing trial {trial_obj.id} from {inst_obj.org_full_name}')
+            logger.info(f"storing trial {trial_obj.id} from {inst_obj.org_full_name}")
         self.session.commit()
 
     def is_ready(self):
