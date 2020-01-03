@@ -9,20 +9,20 @@ RENAME_FIELDS_MAP = {
     "NCTId": "id",
 }
 
-INSTITUTION_FIELDS = ["org_full_name", "org_class"]
+ORGANIZATION_FIELDS = ["org_full_name", "org_class"]
 
 
 def extract_institution_from_trial(trial):
     institution = {}
-    for field in INSTITUTION_FIELDS:
+    for field in ORGANIZATION_FIELDS:
         institution[field] = trial.pop(field)
     return institution
 
 
-def split_institution_trial(full_trial):
+def split_organization_trial(full_trial):
     trial = full_trial.copy()
     institution = {}
-    for field in INSTITUTION_FIELDS:
+    for field in ORGANIZATION_FIELDS:
         value = trial.pop(field)
         value = "" if value is None else value
         institution[field] = value
@@ -36,14 +36,10 @@ def trial_from_response_data(response_data):
         if not isinstance(v, str):
             continue
 
-        # convert anything that parses as a date into a date in ISO format
-        try:
+        # convert date columns
+        if "Date" in k and v is not None:
             trial_model[k] = parser.parse(v)
             continue
-        except (ValueError, OverflowError, TypeError):
-            pass
-        except:
-            logger.info(f'Ignoring unusual date: {k}="{v}"')
 
         # convert anything that looks boolean into a bool
         if v == "Yes":
@@ -68,22 +64,31 @@ def add_computed_fields(trial):
 
     Fields related to https://clinicaltrials.gov/ct2/manage-recs/fdaaa
     should_have_results: the trial should have reported results by now
-    is_late: the trial is or was late reporting results
+    is_late: the trial was late reporting results, but is not missing
     is_missing: the trial results should have been reported by now but are missing
     """
     one_year = dt.timedelta(365)
     one_year_ago = dt.datetime.now() - one_year
-    logger.info(trial)
+    # logger.info(trial)
     completion_date = trial["completion_date"]
     trial["should_have_results"] = (
         completion_date is not None and completion_date <= one_year_ago
     )
 
     results_date = trial["results_first_post_date"]
-    trial["is_late"] = trial["should_have_results"] and (
-        (not results_date) or results_date > (completion_date + one_year)
+    trial["is_late"] = (
+        trial["should_have_results"]
+        and results_date is not None
+        and results_date > (completion_date + one_year)
     )
+
     trial["is_missing"] = trial["should_have_results"] and not results_date
+
+    trial["is_on_time"] = (
+        trial["should_have_results"]
+        and not trial["is_late"]
+        and not trial["is_missing"]
+    )
 
     return trial
 

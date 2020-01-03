@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 Base = automap_base(metadata=MetaData(schema=DB_SCHEMA))
 
 
-class Institution(Base):
-    __tablename__ = "institutions"
+class Organization(Base):
+    __tablename__ = "organizations"
 
 
 class Trial(Base):
@@ -37,21 +37,22 @@ class SqlTrialsStoreClient(TrialsStoreInterfaceBase):
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
         logger.info(Trial.__table__.columns)
-        logger.info(Institution.__table__.columns)
+        logger.info(Organization.__table__.columns)
 
     def store_trials_batch(self, trials_batch):
         logger.info("storing {} values".format(len(trials_batch)))
         trials = [tmu.trial_from_response_data(t) for t in trials_batch]
         trials = [tmu.add_computed_fields(t) for t in trials]
         for full_trial in trials:
-            institution, trial = tmu.split_institution_trial(full_trial)
-            inst_obj = Institution(**institution)
+            organization, trial = tmu.split_organization_trial(full_trial)
+            org_obj = Organization(**organization)
 
-            trial["institution"] = inst_obj
+            trial["organization"] = org_obj
             trial_obj = Trial(**trial)
             self.session.merge(trial_obj)
-            logger.info(f"storing trial {trial_obj.id} from {inst_obj.org_full_name}")
+            # logger.info(f"storing trial {trial_obj.id} from {inst_obj.org_full_name}")
         self.session.commit()
+        logger.info("Batch stored.")
 
     def is_ready(self):
         return True

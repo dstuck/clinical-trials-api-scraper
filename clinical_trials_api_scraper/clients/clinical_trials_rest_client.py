@@ -1,31 +1,32 @@
 import requests
 import logging
+from dateutil import parser
 
 logger = logging.getLogger(__name__)
 
 
 class ClinicalTrialsRestClient(object):
-    base_url = 'https://clinicaltrials.gov/api'
+    base_url = "https://clinicaltrials.gov/api"
     DEFAULT_REQUESTED_FIELDS = [
-        'NCTId',
-        'OrgFullName',
-        'OrgClass',
-        'OverallStatus',
-        'OfficialTitle',
-        'Condition',
-        'DelayedPosting',
-        'WhyStopped',
-        'StartDate',
-        'StatusVerifiedDate',
-        'CompletionDate',
-        'ResultsFirstSubmitDate',
-        'ResultsFirstPostDate',
-        'LastUpdateSubmitDate',
-        'PointOfContactEMail',
-        'PointOfContactOrganization',
-        'ResponsiblePartyInvestigatorFullName',
-        'OverallOfficialAffiliation',
-        'OverallOfficialName',
+        "NCTId",
+        "OrgFullName",
+        "OrgClass",
+        "OverallStatus",
+        "OfficialTitle",
+        "Condition",
+        "DelayedPosting",
+        "WhyStopped",
+        "StartDate",
+        "StatusVerifiedDate",
+        "CompletionDate",
+        "ResultsFirstSubmitDate",
+        "ResultsFirstPostDate",
+        "LastUpdateSubmitDate",
+        "PointOfContactEMail",
+        "PointOfContactOrganization",
+        "ResponsiblePartyInvestigatorFullName",
+        "OverallOfficialAffiliation",
+        "OverallOfficialName",
     ]
     MAX_REQUESTABLE_RECORDS = 1000
 
@@ -34,32 +35,29 @@ class ClinicalTrialsRestClient(object):
         request_url = "{}/query/study_fields?fmt=JSON".format(cls.base_url)
         response = requests.get(request_url)
         response.raise_for_status()
-        return response.json()['StudyFieldsResponse']['NStudiesAvail']
+        return response.json()["StudyFieldsResponse"]["NStudiesAvail"]
 
     @classmethod
-    def request_trials(cls, start_id, end_id=None, requested_fields=None, dry_run=False):
+    def request_trials(
+        cls, start_id, end_id=None, requested_fields=None, dry_run=False
+    ):
         if start_id < 1:
-            raise IndexError(
-                'start_id must be 1 or greater: {}'.format(start_id))
+            raise IndexError("start_id must be 1 or greater: {}".format(start_id))
 
-        if (end_id+1 - start_id) > cls.MAX_REQUESTABLE_RECORDS:
+        if (end_id + 1 - start_id) > cls.MAX_REQUESTABLE_RECORDS:
             raise IndexError(
-                'Requested more records than {} records: [{}, {}]'.format(
-                    cls.MAX_REQUESTABLE_RECORDS,
-                    start_id, end_id
+                "Requested more records than {} records: [{}, {}]".format(
+                    cls.MAX_REQUESTABLE_RECORDS, start_id, end_id
                 )
             )
 
         requested_fields = requested_fields or cls.DEFAULT_REQUESTED_FIELDS
         request_url = "{api_url}/query/study_fields?fmt=JSON&fields={fields}&min_rnk={min_rnk}".format(
-            api_url=cls.base_url,
-            fields=','.join(requested_fields),
-            min_rnk=start_id,
+            api_url=cls.base_url, fields=",".join(requested_fields), min_rnk=start_id,
         )
         if end_id:
             request_url = "{request_url}&max_rnk={max_rnk}".format(
-                request_url=request_url,
-                max_rnk=end_id,
+                request_url=request_url, max_rnk=end_id,
             )
         if dry_run:
             return request_url
@@ -74,30 +72,31 @@ class ClinicalTrialsRestClient(object):
 
     @classmethod
     def _extract_data(cls, response):
-        json_response = response.json()['StudyFieldsResponse']
-        if json_response['NStudiesReturned'] == 0:
+        json_response = response.json()["StudyFieldsResponse"]
+        if json_response["NStudiesReturned"] == 0:
             return []
-        data_version = json_response['DataVrs']
-        response_data = json_response['StudyFields']
+        data_version = json_response["DataVrs"]
+        response_data = json_response["StudyFields"]
         for datum in response_data:
-            datum['DataVersion'] = data_version
+            datum["DataVersion"] = parser.parse(data_version)
         return response_data
 
     @classmethod
     def _clean_data(cls, response_data):
-        '''
+        """
         Trial data is all returned as a list but should just be a single value or None
         :param response_data: List of dicts with trial data
         :return: response_data with inner values unwrapped
-        '''
+        """
         for trial in response_data:
             for default_field in cls.DEFAULT_REQUESTED_FIELDS:
                 if default_field in trial:
                     field_value = trial[default_field]
                     if isinstance(field_value, (list, tuple)):
                         # TODO: just take the first one for now, this is a hack!
-                        trial[default_field] = field_value[0] if len(
-                            field_value) > 0 else None
+                        trial[default_field] = (
+                            field_value[0] if len(field_value) > 0 else None
+                        )
             # delete useless field
-            del trial['Rank']
+            del trial["Rank"]
         return response_data
