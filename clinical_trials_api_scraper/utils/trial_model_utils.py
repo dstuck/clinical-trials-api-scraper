@@ -68,7 +68,7 @@ def add_computed_fields(trial):
     is_missing: the trial results should have been reported by now but are missing
     """
     one_year = dt.timedelta(365)
-    one_year_ago = dt.datetime.now() - one_year
+    one_year_ago = trial["data_version"] - one_year
     # logger.info(trial)
     completion_date = trial["completion_date"]
     trial["should_have_results"] = (
