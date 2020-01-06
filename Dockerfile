@@ -2,6 +2,9 @@
 FROM python:3.7-slim-buster
 
 WORKDIR /app
+COPY requirements.txt /app
+RUN pip install -r requirements.txt
+
 COPY clinical_trials_api_scraper /app/clinical-trials-api-scraper/clinical_trials_api_scraper
 COPY setup.py /app/clinical-trials-api-scraper
 

@@ -1,4 +1,7 @@
-from clinical_trials_api_scraper.clients.clinical_trials_rest_client import ClinicalTrialsRestClient
+from clinical_trials_api_scraper.clients.clinical_trials_rest_client import (
+    ClinicalTrialsRestClient,
+)
+
 
 class ClinicalTrialsScraper(object):
     def __init__(self, data_store_client, min_id=1, max_id=None):
@@ -17,14 +20,15 @@ class ClinicalTrialsScraper(object):
         batch_endpoints = list(range(1, self.max_id, max_requestable_records))
         batch_endpoints.append(self.max_id + 1)
         # We could always distribute this if it becomes the bottleneck
-        for start_id, end_id_exclusive in zip(batch_endpoints[:-1], batch_endpoints[1:]):
-            end_id = end_id_exclusive-1
+        for start_id, end_id_exclusive in zip(
+            batch_endpoints[:-1], batch_endpoints[1:]
+        ):
+            end_id = end_id_exclusive - 1
             self._request_and_store_batch(start_id, end_id)
 
     def _request_and_store_batch(self, start_id, end_id):
         trials_batch = ClinicalTrialsRestClient.request_trials(
-            start_id=start_id,
-            end_id=end_id,
+            start_id=start_id, end_id=end_id,
         )
         self._store_batch_data(trials_batch)
 
