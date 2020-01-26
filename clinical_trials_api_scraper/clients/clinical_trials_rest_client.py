@@ -7,10 +7,11 @@ logger = logging.getLogger(__name__)
 
 class ClinicalTrialsRestClient(object):
     base_url = "https://clinicaltrials.gov/api"
+    # Limited to 20 fields without challenge
     DEFAULT_REQUESTED_FIELDS = [
         "BriefTitle",
-        "Condition",
-        "CompletionDate",
+        # "Condition",
+        # "CompletionDate", # Only slightly different than primary completion date which is main concern
         "DelayedPosting",
         "DesignPrimaryPurpose",
         "LastUpdateSubmitDate",
@@ -19,24 +20,24 @@ class ClinicalTrialsRestClient(object):
         "IsUnapprovedDevice",
         "IsUSExport",
         "NCTId",
-        "OfficialTitle",
+        # "OfficialTitle",
         "OrgClass",
         "OrgFullName",
-        "OverallOfficialAffiliation",
-        "OverallOfficialName",
+        # "OverallOfficialAffiliation",
+        # "OverallOfficialName",
         "OverallStatus",
         "Phase",
-        "PointOfContactEMail",
-        "PointOfContactOrganization",
+        # "PointOfContactEMail",
+        # "PointOfContactOrganization",
         "PrimaryCompletionDate",
         "PrimaryCompletionDateType",
-        "ResponsiblePartyInvestigatorFullName",
-        "ResultsFirstSubmitDate",
+        # "ResponsiblePartyInvestigatorFullName",
         "ResultsFirstPostDate",
-        "StudyType",
+        "ResultsFirstSubmitDate",
         "StartDate",
-        "StatusVerifiedDate",
-        "WhyStopped",
+        "StudyType",
+        # "StatusVerifiedDate",
+        # "WhyStopped",
     ]
     MAX_REQUESTABLE_RECORDS = 1000
 
