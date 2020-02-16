@@ -37,7 +37,7 @@ def trial_from_response_data(response_data):
             continue
 
         # convert date columns
-        if "Date" in k and v is not None:
+        if  k.endswith("Date") and v is not None:
             trial_model[k] = parser.parse(v)
             continue
 
@@ -70,7 +70,7 @@ def add_computed_fields(trial):
     one_year = dt.timedelta(365)
     one_year_ago = trial["data_version"] - one_year
     # logger.info(trial)
-    completion_date = trial["completion_date"]
+    completion_date = trial["primary_completion_date"]
     trial["should_have_results"] = (
         completion_date is not None and completion_date <= one_year_ago
     )
