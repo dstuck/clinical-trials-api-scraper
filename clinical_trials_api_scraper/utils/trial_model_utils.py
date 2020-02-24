@@ -10,7 +10,14 @@ RENAME_FIELDS_MAP = {
 }
 
 ORGANIZATION_FIELDS = ["org_full_name", "org_class"]
-
+US_TERRITORIES = set([
+    "United States",
+    "American Samoa",
+    "Guam",
+    "Northern Mariana Islands",
+    "Puerto Rico",
+    "U.S. Virgin Islands"
+])
 
 def extract_institution_from_trial(trial):
     institution = {}
@@ -37,7 +44,7 @@ def trial_from_response_data(response_data):
             continue
 
         # convert date columns
-        if "Date" in k and v is not None:
+        if  k.endswith("Date") and v is not None:
             trial_model[k] = parser.parse(v)
             continue
 
@@ -67,15 +74,21 @@ def add_computed_fields(trial):
     is_late: the trial was late reporting results, but is not missing
     is_missing: the trial results should have been reported by now but are missing
     """
+    add_applicable_trial_fields(trial)
+
     one_year = dt.timedelta(365)
     one_year_ago = trial["data_version"] - one_year
     # logger.info(trial)
-    completion_date = trial["completion_date"]
+    completion_date = trial["primary_completion_date"]
+    is_applicable_trial = trial["is_applicable_trial"]
     trial["should_have_results"] = (
-        completion_date is not None and completion_date <= one_year_ago
+        is_applicable_trial and completion_date is not None and completion_date <= one_year_ago
     )
 
     results_date = trial["results_first_post_date"]
+    if not trial['is_applicable_trial']:
+        return trial
+
     trial["is_late"] = (
         trial["should_have_results"]
         and results_date is not None
@@ -92,6 +105,44 @@ def add_computed_fields(trial):
 
     return trial
 
+def add_applicable_trial_fields(trial):
+    """
+    1) StudyType="Interventional"
+    2) Any of:
+        1) {"United States", "American Samoa", "Guam", "Northern Mariana Islands", "Puerto Rico", "U.S. Virgin Islands"} intersects with set(LocationCountry)
+        2) [[Has IND or IDE Number]] - not publically available
+        3) "Yes" in IsUSExport
+    3) Either:
+        1) IsFDARegulatedDrug and Phase != "Phase 1"
+        2) IsUnapprovedDevice and DesignPrimaryPurpose != "Device Feasibility"
+
+    :param trial: Trial dictionary
+    :param rigorous: Whether to treat missing values as False (rigorous) or True (not rigorous)
+    :return:
+    """
+    is_interventional = trial.get('study_type') == "Interventional"
+    is_under_fda_oversight = (
+        trial['location_country'] in US_TERRITORIES
+        or trial['is_u_s_export']
+    )
+    is_major_drug_test = (
+        trial['is_f_d_a_regulated_drug']
+        and trial["phase"]
+        and "Phase 1" not in trial["phase"]
+    )
+    is_major_device_test = (
+        trial['is_unapproved_device']
+        and trial["design_primary_purpose"] != "Device Feasibility"
+    )
+    trial['is_interventional'] = is_interventional
+    trial['is_under_fda_oversight'] = is_under_fda_oversight
+    trial['is_major_drug_test'] = is_major_drug_test
+    trial['is_major_device_test'] = is_major_device_test
+    trial['is_applicable_trial'] = (
+        is_interventional
+        and is_under_fda_oversight
+        and (is_major_device_test or is_major_drug_test)
+    )
 
 def dict_to_snake_case(d):
     return {to_snake_case(k): v for k, v in d.items()}
